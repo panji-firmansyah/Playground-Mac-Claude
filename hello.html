@@ -53,18 +53,16 @@
             transition: width 0.3s, height 0.3s;
         }
 
-        /* Secondary Cursor Follower */
-        #cursor-follower {
+        /* Confetti Particles */
+        .confetti {
             position: fixed;
-            width: 8px;
-            height: 8px;
-            background: white;
-            border-radius: 50%;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.8);
             pointer-events: none;
-            transform: translate(-50%, -50%);
             z-index: 100;
-            transition: transform 0.15s ease-out, opacity 0.3s ease;
-            box-shadow: 0 0 15px white;
+            border-radius: 1px;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
         }
 
         .container {
@@ -190,7 +188,6 @@
 
 <body>
     <div id="cursor-glow"></div>
-    <div id="cursor-follower"></div>
 
     <div class="container">
         <div class="header">
@@ -230,20 +227,68 @@
 
     <script>
         const glow = document.getElementById('cursor-glow');
-        const follower = document.getElementById('cursor-follower');
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 4 + 2;
+                this.speedX = Math.random() * 2 - 1;
+                this.speedY = Math.random() * 2 - 1;
+                this.life = 1;
+                this.decay = Math.random() * 0.02 + 0.015;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = Math.random() * 10 - 5;
+
+                this.el = document.createElement('div');
+                this.el.className = 'confetti';
+                this.el.style.width = `${this.size}px`;
+                this.el.style.height = `${this.size}px`;
+                this.el.style.left = `${this.x}px`;
+                this.el.style.top = `${this.y}px`;
+                this.el.style.transform = `translate(-50%, -50%) rotate(${this.rotation}deg)`;
+                document.body.appendChild(this.el);
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= this.decay;
+                this.rotation += this.rotationSpeed;
+
+                if (this.life <= 0) {
+                    this.el.remove();
+                    return false;
+                }
+
+                this.el.style.left = `${this.x}px`;
+                this.el.style.top = `${this.y}px`;
+                this.el.style.opacity = this.life;
+                this.el.style.transform = `translate(-50%, -50%) rotate(${this.rotation}deg) scale(${this.life})`;
+                return true;
+            }
+        }
+
+        let particles = [];
 
         document.addEventListener('mousemove', (e) => {
             const x = e.clientX;
             const y = e.clientY;
 
-            // Move glow immediately
             glow.style.left = `${x}px`;
             glow.style.top = `${y}px`;
 
-            // Move follower dot
-            follower.style.left = `${x}px`;
-            follower.style.top = `${y}px`;
+            // Spawn confetti particles sparingly
+            if (Math.random() > 0.5) {
+                particles.push(new Particle(x, y));
+            }
         });
+
+        function animate() {
+            particles = particles.filter(p => p.update());
+            requestAnimationFrame(animate);
+        }
+        animate();
 
         // Effect when hovering interactive elements
         const statBoxes = document.querySelectorAll('.stat-box');
@@ -251,12 +296,10 @@
             box.addEventListener('mouseenter', () => {
                 glow.style.width = '600px';
                 glow.style.height = '600px';
-                follower.style.transform = 'translate(-50%, -50%) scale(2)';
             });
             box.addEventListener('mouseleave', () => {
                 glow.style.width = '400px';
                 glow.style.height = '400px';
-                follower.style.transform = 'translate(-50%, -50%) scale(1)';
             });
         });
     </script>
